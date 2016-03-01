@@ -1,0 +1,52 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:jaxws="http://cxf.apache.org/jaxws"
+	xmlns:soap="http://cxf.apache.org/bindings/soap"
+	xmlns:http="http://cxf.apache.org/transports/http/configuration"
+	xmlns:cxf="http://cxf.apache.org/core"
+	xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+	
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://cxf.apache.org/jaxws 
+	http://cxf.apache.org/schemas/jaxws.xsd
+	http://cxf.apache.org/core 
+	http://cxf.apache.org/schemas/core.xsd
+	http://cxf.apache.org/transports/http/configuration 
+	http://cxf.apache.org/schemas/configuration/http-conf.xsd
+	http://cxf.apache.org/bindings/soap 
+	http://cxf.apache.org/schemas/configuration/soap.xsd
+	http://cxf.apache.org/jaxrs
+  	http://cxf.apache.org/schemas/jaxrs.xsd">
+	 <cxf:bus>
+		<cxf:properties>
+			<entry key="org.apache.cxf.stax.maxTextLength" value="536870912" /> <!-- 512MB -->
+			<entry key="org.apache.cxf.stax.maxChildElements" value="100000" /> <!-- 100.000 -->
+		</cxf:properties>
+		<cxf:features>
+			<cxf:logging/>
+		</cxf:features>
+	</cxf:bus>
+	 
+    
+	<bean id="service1" class="com.hx.bankInterface.service.impl.BankInterfaceImpl"></bean>
+	<jaxws:endpoint id="bankInterface1" implementor="#service1" address="http://localhost:9998/BI_S/BankInterface?wsdl" >
+     <jaxws:inInterceptors> 
+         <bean id="inInterceptor" class="com.hx.bankInterface.interceptor.UserInterceptor">
+         </bean> 
+     </jaxws:inInterceptors>
+    
+     <jaxws:outInterceptors> 
+         <bean id="outInterceptor"  class="org.apache.cxf.interceptor.LoggingOutInterceptor"/> 
+     </jaxws:outInterceptors> 
+		
+		<!-- 2015 12.1 未解决问题：配置自定义拦截器后无法启动 -->
+		<!-- 		
+		<jaxws:implementor>
+	     	<bean id="userInterceptor" class="com.hx.bankInterface.interceptor.UserInterceptor"/>
+	    </jaxws:implementor>
+	      -->
+     </jaxws:endpoint>
+   
+</beans>

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hx.bankInterface.dao.CheckBillDao">
+   <resultMap id="ResultMap" type="com.hx.bankInterface.po.RollBackBillInfo">
+         <result property="billDate" column="BILLDATE"/>
+         <result property="oldBillCode" column="BILLCODE"/>
+    </resultMap>
+    <select id="checkBillCode" resultType="java.lang.Integer">
+   		select count(1) as cou from sf_bill
+   		 	 where billcode =#{0} and rollbackflag='0' 
+    </select>
+    <select id="checkRollBack"  resultType="java.lang.Integer">
+    	select count(1) as cou from sf_bill 
+    		 where billcode=#{0} and rollbackflag='1' 
+    </select>
+
+    <update id="updateSfBill">
+    	 update sf_bill set rollbackflag = 0,rollbackreason = null,
+    	 rollbackoperator = null,rollbackdate =null where billcode =#{0}
+    </update>
+
+    <update id="updateSfDetail">
+   		update sf_detail set 
+   		rollbackflag = '0'
+   		where billcode = #{0} 
+    </update>
+    
+    <update id="switchBankFlag" >
+    	update sf_bill set bankflag='1'
+    	where billcode = #{0}
+    </update>
+
+    <update id="updateSfCharge">
+    	update sf_charge a 
+    	set nowcash =(select b.cash from sf_detail b 
+    		where a.housecode = b.housecode and a.chargemonth = b.chargemonth and a.itemcode = b.itemcode
+    		and a.standardcode = b.standardcode and b.billcode = #{0} ) 
+    	where exists (
+    		select 1 from sf_detail b 
+    		where a.housecode = b.housecode and a.chargemonth = b.chargemonth and a.itemcode = b.itemcode
+    		and a.standardcode = b.standardcode and b.billcode = #{0} 
+    	)
+    </update>
+
+    <insert id="updateScBolt">
+    	INSERT INTO SC_BOLT 
+				(
+				CHARGEMONTH
+				,HOUSECODE
+				,COMMUNITYCODE
+				,BUILDINGCODE
+				,BOLTSTATUS
+				,OPERATEDATE
+				,OPERATOR
+				,CLUSTERCODING
+				,CHID
+				,CHNAME
+				,BOLTAREA
+				)
+				select
+				 b.CHARGEMONTH
+				,a.HOUSECODE
+				,a.COMMUNITYCODE
+				,a.BUILDINGCODE
+				,'已下达开栓命令'
+				,to_char(sysdate,'YYYY-MM-DD HH24:MI:SS')
+				,b.operator
+				,a.CLUSTERCODING
+				,a.CHID
+				,a.CHNAME
+				,a.CHARGEAREA
+				FROM FC_CHARGEAREA a
+				inner join sf_detail b on a.housecode = b.housecode  
+					and a.chid = b.clocknumber and b.billcode =#{0} and b.chargemonth=#{1}
+    </insert>
+    <insert id="updateScDetail">
+  	  insert into sc_boltdetail
+			(
+			CHARGEMONTH
+			,HOUSECODE
+			,COMMUNITYCODE
+			,BUILDINGCODE
+			,BOLTACTION
+			,BOLTPERSON
+			,BOLTDATE
+			,OPERATEDATE
+			,OPERATOR
+			,BOLTTYPE
+			,BOLTDEPT
+			,ORDERTYPE
+			,CLUSTERCODING
+			,CHID
+			,CHNAME
+			,BOLTAREA
+			,CLOSETYPE
+			,OPERATESTATUS
+			)
+			select
+			 b.CHARGEMONTH
+			,b.HOUSECODE
+			,b.COMMUNITYCODE
+			,b.BUILDINGCODE
+			,'下达开栓命令'
+			,b.operator
+			,to_char(sysdate,'YYYY-MM-DD HH24:MI:SS')
+			,to_char(sysdate,'YYYY-MM-DD HH24:MI:SS')
+			,b.operator
+			,'收费'
+			,''
+			,'1'
+			,b.CLUSTERCODING
+			,a.CHID
+			,a.CHNAME
+			,a.BOLTAREA
+			,'关栓'
+			,'需执行'
+			FROM sc_bolt a 
+			inner join sf_detail b on a.housecode = b.housecode  
+			and a.chid = b.clocknumber and b.billcode =#{0} and b.chargemonth=#{1}
+    </insert>
+    <select id="getRollBack"  resultMap="ResultMap">
+    	select billdate,billcode from sf_bill where billdate =#{0} and billman = #{1}
+    </select>
+</mapper>

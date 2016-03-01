@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xmlns:tx="http://www.springframework.org/schema/tx" 
+    xmlns:task="http://www.springframework.org/schema/task"
+    xsi:schemaLocation="http://www.springframework.org/schema/context 
+    	http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/beans 
+        http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+        http://www.springframework.org/schema/mvc 
+        http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd
+        http://cxf.apache.org/jaxrs
+  		http://cxf.apache.org/schemas/jaxrs.xsd
+  		http://www.springframework.org/schema/task 
+  		http://www.springframework.org/schema/task/spring-task-3.2.xsd">
+
+    <!-- Root Context: defines shared resources visible to all other web components -->
+    <import resource="db-conf.xml" />
+    
+   	<mvc:annotation-driven validator="validator"/>
+  
+    <context:component-scan base-package="com.hx.bankInterface.service.impl" />
+   
+  <!--   <jaxrs:server id="userRestService" address="/rest"> 
+		 <jaxrs:serviceBeans> 
+	 		<ref bean="userServiceImpl"/> 
+		 </jaxrs:serviceBeans> 
+		 <jaxrs:providers>
+		    <bean class="com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider"/>
+		    <bean class="org.apache.cxf.rs.security.cors.CrossOriginResourceSharingFilter">
+		      <property name="allowOrigins" value="http://192.168.2.248"/>
+		    </bean>
+  		 </jaxrs:providers>
+	</jaxrs:server>  -->
+	<bean id="userServiceImpl" class="com.hx.bankInterface.service.impl.BankInterfaceImpl"/> 
+</beans>

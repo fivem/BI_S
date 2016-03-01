@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hx.bankInterface.dao.QueryDao">
+    <resultMap id="ResultMap" type="com.hx.bankInterface.po.ArrearsInfo">
+         <result property="chargeMonth" column="CHARGEMONTH"/>
+         <result property="houseCHID" column="CLOCKNUMBER"/>
+         <result property="price" column="PRICE"/>
+         <result property="houseArea" column="CHARGEAREA"/>
+         <result property="totalAccount" column="QIANFEI"/>
+         <result property="forfeit" column="ZNJ"/>
+    </resultMap>
+
+	<!-- <select id="queryChargeMonth" parameterType="com.hx_soft.mc.system.jcgl.po.JcJhExample" resultType="java.lang.Integer"> -->
+	<select id="queryChargeMonth"  resultType="java.lang.String"> 
+		  select   case when to_char(sysdate,'MM-DD')&gt;= financemonth then to_char(sysdate,'YYYY')
+			else to_char(to_number(to_char(sysdate,'YYYY'))-1) end year
+			from sf_item where itemcode='A'
+	</select>
+	<!-- <select id ="queryExists" resultType="java.util.HashMap" parameterType="java.lang.String"> -->
+	<!-- 由于传多个参数，不能使用parameterType -->
+	<select id ="queryExists" resultType="java.util.HashMap" >
+		select a.houseCode,b.ownername,a.address,b.workunit, 
+             sum(case when c.chargemonth= #{1} then 1 else 0 end) as chaYearCount,  
+             sum(case when c.chargemonth= #{1}  then c.REALACCOUNT-c.NOWCASH else 0 end) as qf, 
+             sum(case when c.chargemonth!= #{1}  then c.REALACCOUNT-c.NOWCASH else 0 end) as oldcount 
+             from fc_house a,fc_owner b,sf_charge c 
+             where a.housecode=#{0} and a.housecode=b.housecode(+) and b.isowner(+)='1' 
+             and c.itemcode(+)='A' and a.housecode=c.housecode(+) 
+             group by a.houseCode,b.ownername,a.address,b.workunit 
+	</select>
+	
+	<select id="queryByCard" resultMap="ResultMap">
+		SELECT a.housecode,a.itemcode,a.chargemonth,a.standardCode,          
+		    a.PRICE   AS PRICE,a.CHARGEAREA   AS CHARGEAREA,           
+		    (a.REALACCOUNT - a.NOWCASH)  AS qianfei,                      
+		    a.clocknumber,                                                     
+		    NVL(PKG_CHARGE.getOVF_number(a.HOUSECODE,                          
+		                                     a.Itemcode,                       
+		                                     a.CHARGEMONTH,                    
+		                                     a.CLOCKNUMBER,                    
+		                                     a.LATEFEESTARTD,                  
+		                                     TO_CHAR(SYSDATE, 'YYYY-MM-DD'), 
+		                                     a.REALACCOUNT - a.NOWCASH,'hnrlAdmin'),0) AS ZNJ                                                  
+		   FROM  sf_charge a                                           
+		  WHERE a.housecode = #{0}                                
+		                               
+		    AND a.itemcode = 'A'                                             
+		    AND a.REALACCOUNT > a.NOWCASH                                      
+		  ORDER BY a.housecode,a.itemcode,a.chargemonth,a.standardCode,a.PRICE  
+	</select>
+	
+	<select id="getStopFlag" resultType="java.lang.Integer" parameterType="com.hx.bankInterface.po.ChargeInfo">
+		select count(1) as cou from fc_stopheating 
+			where
+			housecode = #{userCard,jdbcType=VARCHAR}
+			and
+			mon = #{chargeMonth,jdbcType=VARCHAR}
+			and
+			chid = #{houseCHID,jdbcType=VARCHAR} 
+			and
+			itemcode = 'A'
+			and 
+			stopmark = '停供'
+	</select>
+</mapper>

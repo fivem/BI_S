@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hx.bankInterface.dao.RollBackDao">
+   
+    <select id="queryByBillCode" resultType="java.util.HashMap" parameterType="com.hx.bankInterface.dao.RollBackDao">
+     	 select rollbackflag,BillDate  from sf_bill where billcode = #{oldBillCode,jdbcType=VARCHAR} 
+    </select>
+    <update id="updateSfBill"   parameterType="com.hx.bankInterface.dao.RollBackDao">
+    	update sf_bill set 
+    		rollbackflag='1',
+    		rollbackreason='银行冲账',
+    		rollbackoperator=billman,
+    		rollbackdate=to_char(sysdate,'YYYY-MM-DD HH24:MI:SS'),
+    		operatedate=to_char(sysdate,'YYYY-MM-DD HH24:MI:SS')
+    		where billcode = #{oldBillCode,jdbcType=VARCHAR} 
+    </update>
+    <update id="updateSfDetail" parameterType="com.hx.bankInterface.dao.RollBackDao">
+		update sf_detail set 
+    		rollbackflag='1',
+    		operatedate=to_char(sysdate,'YYYY-MM-DD HH24:MI:SS')
+    		where billcode = #{oldBillCode,jdbcType=VARCHAR} 
+	</update>
+	<update id="updateSfCharge"  parameterType="com.hx.bankInterface.dao.RollBackDao">
+		update sf_charge a 
+			set a.nowcash = a.nowcash - (select b.cash from sf_detail b 
+				where a.housecode = b.housecode
+				and a.chargemonth = b.chargemonth
+				and a.clocknumber = b.clocknumber
+				and a.itemcode = b.itemcode
+				and a.standardcode = b.standardcode
+				and b.billcode =  #{oldBillCode,jdbcType=VARCHAR} )
+			where exists 
+			(select 1 from sf_detail b 
+				where a.housecode = b.housecode
+				and a.chargemonth = b.chargemonth
+				and a.clocknumber = b.clocknumber
+				and a.itemcode = b.itemcode
+				and a.standardcode = b.standardcode
+				and b.billcode =  #{oldBillCode,jdbcType=VARCHAR} 
+			)
+	</update>
+	<delete id="updateScBolt" parameterType="com.hx.bankInterface.dao.RollBackDao">
+		delete from sc_bolt a 
+			where exists 
+			(select 1 from sf_detail b where a.housecode = b.housecode 
+			and a.chargemonth = b.chargemonth 
+			and a.chid = b.clocknumber
+			and b.billcode= #{oldBillCode,jdbcType=VARCHAR} )
+	</delete>
+	<delete id="updateScBoltDetail" >
+		delete from sc_boltdetail a
+			where exists 
+			(select 1 from sf_detail b where a.housecode = b.housecode 
+			and a.chargemonth = b.chargemonth 
+			and a.chid = b.clocknumber
+			and b.billcode= #{oldBillCode,jdbcType=VARCHAR}  )
+	</delete>
+</mapper>

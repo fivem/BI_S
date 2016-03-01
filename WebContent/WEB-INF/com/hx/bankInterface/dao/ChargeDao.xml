@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hx.bankInterface.dao.ChargeDao">
+    <update id="updateSfCharge" parameterType="com.hx.bankInterface.po.BillInfo">
+     	 update sf_charge
+     		 set
+	     	 nowcash = realaccount,
+	     	 latefee = #{forfeit,jdbcType=DECIMAL},
+	     	 latefeecash= #{forfeit,jdbcType=DECIMAL}
+	     	 where 
+	     	 housecode = #{userCard,jdbcType=VARCHAR} 
+	     	 and chargemonth = #{chargeMonth,jdbcType=VARCHAR}  
+	     	 and clocknumber = #{houseCHID,jdbcType=VARCHAR}  
+	     	 and itemcode ='A'
+    </update>
+ 
+    <insert id="updateSfDetail"  parameterType="com.hx.bankInterface.po.BillInfo">
+    	insert into sf_detail 
+				(
+				BILLCODE
+				,CHARGEMONTH
+				,HOUSECODE
+				,ITEMCODE
+				,CLOCKNUMBER
+				,COMMUNITYCODE
+				,BUILDINGCODE
+				,TOTALACCOUNT
+				,REALCOUNT
+				,ROLLBACKFLAG
+				,LATEFEETOTAL
+				,LATEFEENOW
+				,OPERATOR
+				,OPERATEDATE
+				,DEPT_ID
+				,CHARGECOMPANY
+				,LATEFEESTARTD
+				,LATEFEEEND
+				,CASH
+				,HOUSEMANAGER
+				,STAT_ID
+				,CLUSTERCODING
+				,CHARGEAREA
+				,CHARGEPRICE
+				,STANDARDCODE
+ 				)
+				select #{billCode,jdbcType=VARCHAR}
+				,CHARGEMONTH
+				,HOUSECODE
+				,ITEMCODE
+				,CLOCKNUMBER
+				,COMMUNITYCODE
+				,BUILDINGCODE
+				,TOTALACCOUNT
+				,REALACCOUNT
+				,'0'
+				,'0'
+				,'0'
+				,#{billMan,jdbcType=VARCHAR}
+				,to_char(sysdate,'YYYY-MM-DD HH24:MI:SS')
+				,DEPT_ID
+				,OWNER
+				,LATEFEESTARTD
+				,to_char(sysdate,'YYYY-MM-DD')
+				,#{totalAccount,jdbcType=DECIMAL}
+				,HOUSEMANAGER
+				,STAT_ID
+				,CLUSTERCODING
+				,CHARGEAREA
+				,PRICE
+				,STANDARDCODE
+ 				from sf_charge where
+				housecode = #{userCard,jdbcType=VARCHAR} 
+				and chargemonth = #{chargeMonth,jdbcType=VARCHAR}  
+				and clocknumber = #{houseCHID,jdbcType=VARCHAR}  
+				and itemcode ='A' 
+    </insert>
+    <insert id="updateSfBill"  parameterType="com.hx.bankInterface.po.BillInfo">
+    		INSERT INTO SF_BILL
+				(
+				BILLCODE
+				,COMMUNITYCODE
+				,BUILDINGCODE
+				,HOUSECODE
+				,PAYMODE
+				,OWNERNAME
+				,REALCASH
+				,LATEFEETOTAL
+				,LATEFEENOW
+				,REALCOUNT
+				,BILLMAN
+				,BILLDATE
+				,OPERATOR
+				,OPERATEDATE
+				,billtype
+				,chargecompany
+				,CLUSTERCODING
+				)
+				select
+				a.BILLCODE
+				,a.COMMUNITYCODE
+				,a.BUILDINGCODE
+				,a.HOUSECODE
+				,#{payMode,jdbcType=VARCHAR}
+				,b.OWNER
+				,sum(a.CASH)
+				,sum(a.LATEFEETOTAL)
+				,sum(a.LATEFEENOW)
+				,sum(a.REALCOUNT)
+				,#{billMan,jdbcType=VARCHAR}
+				,#{billDate,jdbcType=VARCHAR}
+				,a.OPERATOR
+				,to_char(sysdate,'YYYY-MM-DD HH24:MI:SS')
+				,'银行代缴'
+				,b.owner
+				,a.CLUSTERCODING
+				FROM SF_DETAIL a inner join sf_charge b on a.housecode = b.housecode and a.chargemonth = b.chargemonth and a.itemcode = b.itemcode and a.standardcode = b.standardcode and a.clocknumber = b.clocknumber 
+				WHERE
+				a.billcode = #{billCode , jdbcType=VARCHAR}
+				group by  a.BILLCODE
+				,a.COMMUNITYCODE
+				,a.BUILDINGCODE
+				,a.HOUSECODE
+				,b.OWNER
+				,a.OPERATOR
+				,a.CLUSTERCODING
+    </insert>
+    <insert id="updateScBolt" parameterType="com.hx.bankInterface.po.ChargeInfo">
+    	INSERT INTO SC_BOLT 
+				(
+				CHARGEMONTH
+				,HOUSECODE
+				,COMMUNITYCODE
+				,BUILDINGCODE
+				,BOLTSTATUS
+				,OPERATEDATE
+				,OPERATOR
+				,CLUSTERCODING
+				,CHID
+				,CHNAME
+				,BOLTAREA
+				)
+				select
+				 #{chargeMonth,jdbcType=VARCHAR}
+				,HOUSECODE
+				,COMMUNITYCODE
+				,BUILDINGCODE
+				,'已下达开栓命令'
+				,to_char(sysdate,'YYYY-MM-DD HH24:MI:SS')
+				,#{billMan,jdbcType=VARCHAR}
+				,CLUSTERCODING
+				,CHID
+				,CHNAME
+				,CHARGEAREA
+				FROM FC_CHARGEAREA
+				WHERE 
+				HOUSECODE = #{userCard,jdbcType=VARCHAR}
+				AND CHID = #{houseCHID,jdbcType=VARCHAR}
+    </insert>
+    <insert id="updateScBoltDetail" parameterType="com.hx.bankInterface.po.ChargeInfo">
+  	  insert into sc_boltdetail
+			(CHARGEMONTH
+			,HOUSECODE
+			,COMMUNITYCODE
+			,BUILDINGCODE
+			,BOLTACTION
+			,BOLTPERSON
+			,BOLTDATE
+			,OPERATEDATE
+			,OPERATOR
+			,BOLTTYPE
+			,BOLTDEPT
+			,ORDERTYPE
+			,CLUSTERCODING
+			,CHID
+			,CHNAME
+			,BOLTAREA
+			,CLOSETYPE
+			,OPERATESTATUS
+			)
+			select
+			 CHARGEMONTH
+			,HOUSECODE
+			,COMMUNITYCODE
+			,BUILDINGCODE
+			,'下达开栓命令'
+			,#{billMan,jdbcType=VARCHAR}
+			,to_char(sysdate,'YYYY-MM-DD HH24:MI:SS')
+			,to_char(sysdate,'YYYY-MM-DD HH24:MI:SS')
+			,#{billMan,jdbcType=VARCHAR}
+			,'收费'
+			,''
+			,'1'
+			,CLUSTERCODING
+			,CHID
+			,CHNAME
+			,BOLTAREA
+			,'关栓'
+			,'需执行'
+			FROM sc_bolt
+			WHERE 
+			HOUSECODE = #{userCard,jdbcType=VARCHAR}
+			AND CHID = #{houseCHID,jdbcType=VARCHAR}
+    </insert>
+</mapper>
